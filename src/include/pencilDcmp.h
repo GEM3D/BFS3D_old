@@ -554,5 +554,65 @@ class PoissonGPU : public PencilDcmp
                      //   static const char *PittPackGetErrorEnum(PittPackResult error);
     void debug1();
 };
+class CFlowVariable : public PencilDcmp
+{
+    private:
+      
+       CFlowVariable *GradX;    
+       CFlowVariable *GradY;   
+       CFlowVariable *GradZ;
 
+
+    public:
+         void initializeField();  
+         
+         CFlowVariable( int nx, int ny, int nz, int p0 ) : PencilDcmp( nx, ny, nz, p0,p0 )
+ {initializeField();GradX=NULL; GradY=NULL;GradZ=NULL;};
+
+         CFlowVariable(PencilDcmp *Field );
+        CFlowVariable operator +( const CFlowVariable& A);
+        // CFlowVariable* getField(){return P;};
+         CFlowVariable* getGradX(){return GradX;};
+         CFlowVariable* getGradY(){return GradY;};
+         CFlowVariable* getGradZ(){return GradZ;};
+
+         void computeGradX();
+         void computeGradY();
+         void computeGradZ();
+         CFlowVariable* shiftStaggeredX();
+         CFlowVariable* shiftStaggeredY();
+         CFlowVariable* shiftStaggeredZ();
+         virtual void updateGhosts()=0;
+
+
+};
+
+class CFlowVariableSingleBlock : public CFlowVariable
+{
+
+    public:
+         CFlowVariableSingleBlock( int nx, int ny, int nz, int p0 ) : CFlowVariable( nx, ny, nz, p0 ){};
+         void updateGhosts();
+//         virtual  ~CFlowVariable(); 
+
+};
+
+class CVelocitySingleBlock
+{
+   private:
+          CFlowVariableSingleBlock* U;
+          CFlowVariableSingleBlock* V;
+          CFlowVariableSingleBlock* W;
+          CFlowVariableSingleBlock* Divergence;
+   public:
+         CVelocitySingleBlock(int nx,int ny,int nz, int p0){U=new CFlowVariableSingleBlock (nx,ny,nz,p0);};
+         CFlowVariable* getU(){return U;};
+         CFlowVariable* getV(){return V;};
+         CFlowVariable* getW(){return W;};
+        
+         CFlowVariable* getDivergence(){return Divergence;}; 
+          
+         void computeDivergence();
+
+};
 #endif
