@@ -39,6 +39,12 @@ class ChunkedArray
     int            getChunkSize();
     void           setDirection( int dir );
     void           setCoords( double *X );
+    double getValue(int i, int j,int k, int index) const;
+#if ( PITTPACKACC )
+#pragma acc routine
+#endif    
+    ChunkedArray operator+(const ChunkedArray& b);
+
 //    void print();
 #if ( PITTPACKACC )
 #pragma acc routine
