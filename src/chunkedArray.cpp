@@ -10,6 +10,23 @@ void ChunkedArray::moveHostToDevice()
 #endif
 }
 
+ChunkedArray ChunkedArray:: operator+(const ChunkedArray& b) {
+         ChunkedArray box;
+    for ( int k = 0; k < Nz; k++ )
+    {       
+        for ( int j = 0; j < Ny; j++ )
+        {  
+            for ( int i = 0; i < Nx; i++ )
+            {
+              box(i,j,k,0) = (*this)(i,j,k,0) + b.getValue(i,j,k,0);
+              box(i,j,k,1) = (*this)(i,j,k,1) + b.getValue(i,j,k,1);         
+            }
+
+        }
+    }
+         return box;
+}
+
 PittPackResult ChunkedArray::allocate( int *n, int nbl )
 {
     Nx = n[0];
