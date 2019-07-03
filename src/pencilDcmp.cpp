@@ -5420,3 +5420,155 @@ static int createNodalCommunicator()
 
     return ( new_np );
 }
+
+void CFlowVariable::initializeField()
+{
+    double c1, c2, c3;
+    double shift = 0;
+    double x,y,z;
+    double pi=3.14159;
+    int Nx = nxChunk;
+    int Ny = nyChunk;
+    int Nz = nz;
+
+    double Xa = coords[0];
+    double Ya = coords[2];
+    double Za = coords[4];
+    if ( !SHIFT )
+    {
+        c1 = ( coords[1] - coords[0] ) / ( Nx + 1. );
+        c2 = ( coords[3] - coords[2] ) / ( Ny + 1. );
+        c3 = ( coords[5] - coords[4] ) / ( Nz + 1. );
+#if ( DEBUG )
+        cout << " c1  " << c1 << " " << c2 << " " << c3 << endl;
+#endif
+    }
+    else
+    {
+        c1 = dxyz[0];
+        c2 = dxyz[1];
+        c3 = dxyz[2];
+    }
+      
+#if ( PITTPACKACC )
+#pragma acc data copy( rhs [0:Nx * Ny * Nz] ) copyin( Nz, Ny, Nx ) present( P.P [0:2 * Nx * Ny * Nz] )
+#endif
+    
+#if ( PITTPACKACC )
+#pragma acc parallel loop gang
+#endif
+        for ( int k = 0; k < Nz; k++ )
+        {
+           z = Za + ( k + 1 ) * c3;
+#if ( PITTPACKACC )
+#pragma acc loop worker
+#endif
+            for ( int j = 0; j < Ny; j++ )
+            {
+                 y = Ya + ( j + 1 ) * c2;
+#if ( PITTPACKACC )
+#pragma acc loop vector
+#endif
+                for ( int i = 0; i < Nx; i++ )
+                {
+                   x = Xa + (i+1) * c1 ;
+
+                   P(i,j,k,0) = 10*sin(2.*pi*x)*sin(2*pi*x);
+                   P(i,j,k,1) = 0;
+                }
+            }
+
+        }
+}
+
+CFlowVariable::CFlowVariable(PencilDcmp *Field)
+{
+      nx=Field->getnx();
+      ny=Field->getny();
+      nz=Field->getnz();
+      p0=Field->getp0(); 
+
+      nxChunk=Field->getnxChunk();
+      nyChunk=Field->getnyChunk();
+      nzChunk=Field->getnzChunk();
+      ChunkedArray *Values=Field->getP();
+      int i,j,k;
+
+        for ( int k = 0; k < nzChunk; k++ )
+        {
+         
+#if ( PITTPACKACC )
+#pragma acc loop worker
+#endif
+            for ( int j = 0; j < nyChunk; j++ )
+            {
+               
+#if ( PITTPACKACC )
+#pragma acc loop vector
+#endif
+                for ( int i = 0; i < nxChunk; i++ )
+                {
+                 
+                   P(i,j,k,0) = (*Values)(i,j,k,0);
+                   P(i,j,k,1) = (*Values)(i,j,k,1);
+                }
+            }
+
+        }
+}
+
+/*CFlowVariable CFlowVariable:: operator +(const CFlowVariable& A)
+{
+      int  nxAChunk=A.getnxChunk();
+      int  nyAChunk=A.getnyChunk();
+      int  nzAChunk=A.getnzChunk();
+
+
+      if(this->nxChunk!=nxAChunk ||this->nyChunk!=nyAChunk|| this->nzChunk!=nzAChunk)
+         throw "Fields of different sizes cannot be summed up!";
+    
+
+      
+      ChunkedArray *ValueA=A.getP();
+      
+      CFlowVariable Result(&A);
+      ChunkedArray ResultArray=*(Result.getP());
+      int i,j,k;
+
+        for ( int k = 0; k < this->nzChunk; k++ )
+        {
+         
+#if ( PITTPACKACC )
+#pragma acc loop worker
+#endif
+            for ( int j = 0; j < this->nyChunk; j++ )
+            {
+               
+#if ( PITTPACKACC )
+#pragma acc loop vector
+#endif
+                for ( int i = 0; i < this->nxChunk; i++ )
+                {
+                 
+                   ResultArray(i,j,k,0) = (*ValueA)(i,j,k,0)+ this->P(i,j,k,0);
+                   ResultArray(i,j,k,1) = (*ValueA)(i,j,k,1)+ this->P(i,j,k,1);
+                }
+            }
+
+        }
+
+    return Result;
+}*/
+
+void CFlowVariableSingleBlock::updateGhosts()
+{
+}
+
+/*void CFlowVariableSingleBlock::computeDivergence()
+{
+   if(U->getGradX()==NULL) U->computeGradX();
+   if(V->getGradX()==NULL) V->computeGradY();  
+   if(W->getGradZ()==NULL) W->computeGradZ();
+
+//   Divergence
+}*/
