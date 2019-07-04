@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 GREEN='\033[22;32m'
 RESET='\033[0m'
 RED='\033[01;31m'
@@ -41,6 +42,9 @@ if [ $cluster == "bridges" ]; then
     module load cmake/3.7.2
     module load fftw3/3.3.4
 
+## test 
+##  module load  
+ 
 
     if [ $GPU -lt 1 ]; then
         module load /opt/packages/openmpi/openmpi-2.0.1/modulefiles/gcc_openmpi-2.0.1
